@@ -74,6 +74,7 @@ class ImageCoordinates:
     def run_thru_files(self):
         """run through all images in input directory"""
         for fimage in self.files:
+            self.root.title(f"Image file: {fimage}")
             self.get_coordinates(fimage)
 
 
