@@ -1,5 +1,8 @@
 # nuclei_finder
-Find nuclei from images using deep learning
+Find nuclei from images using deep learning. 
+
+This project is being done in conjunction with Elizabeth Silvermetz, P.h.D student at Weizmann Institute. 
+The goal of this project is to automate the finding of nuclei in images of cells, which is a timely process when done by humans.
 
 
 ## Files
