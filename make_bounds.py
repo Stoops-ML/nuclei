@@ -1,11 +1,7 @@
 from tkinter import *
-import tkinter.messagebox
-from tkinter.filedialog import askopenfilename
 from PIL import Image, ImageTk
-import tkinter.simpledialog
 from pathlib import Path
 import os
-import warnings
 
 
 class ImageCoordinates:
