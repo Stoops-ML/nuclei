@@ -35,17 +35,13 @@ class ImageCoordinates:
 
         # output file for image
         self.out_file = self.out_dir / re.sub(r'[.].*', '.txt', str(file))
-        with open(self.out_file, 'w') as f:  # clear contents of out_file
-            f.write('\n')  # required for printing next new lines later
+        with open(self.out_file, 'w') as _:  # clear contents of out_file
+            pass
 
         def close_window():
             # count number of lines in file
             with open(self.out_file) as f:
                 file_length = len([1 for _ in f])
-
-            # if four coordinates found (i.e. a bounding box) print new line
-            if self.clicks % 5 != 0:  # four coordinates and one \n line
-                print(f"Last set of coordinates incomplete of file: {file}.\nFix coordinate file manually.\n")
 
             # move onto next image
             self.w.quit()
@@ -62,23 +58,32 @@ class ImageCoordinates:
         # increase number of clicks
         self.clicks += 1
 
-        # print coordinates to file
-        with open(self.out_file, 'a') as f:
-            f.write(f"{event.x}, {event.y}\n")
-            if self.clicks == 4:
-                f.write('\n')
-
-        # draw bounding box
         if self.clicks == 1:
-            self.first_coord = [event.x, event.y]  # beginning corner of box
+            # save top left coordinates of box
+            self.top_left = [event.x, event.y]
+
+            # draw reference dot
+            x1, y1 = (event.x - 1), (event.y - 1)
+            x2, y2 = (event.x + 1), (event.y + 1)
+            self.dot = self.w.create_oval(x1, y1, x2, y2, fill='black', outline='green', width=10)
+
         else:
-            self.w.create_line(self.prev_events[0], self.prev_events[1], event.x, event.y, fill="red", width=2)  # connect corners
+            # draw bounding box
+            self.w.create_line(self.top_left[0], self.top_left[1], self.top_left[0], event.y, fill="red", width=2)
+            self.w.create_line(self.top_left[0], self.top_left[1], event.x, self.top_left[1], fill="red", width=2)
+            self.w.create_line(event.x, event.y, self.top_left[0], event.y, fill="red", width=2)
+            self.w.create_line(event.x, event.y, event.x, self.top_left[1], fill="red", width=2)
+            self.w.delete(self.dot)  # delete reference dot
 
-        if self.clicks == 4:
-            self.w.create_line(event.x, event.y, self.first_coord[0], self.first_coord[1], fill="red", width=2)  # connect first and last corners
-            self.clicks = 0  # reset click counter
+            # print coordinates to file
+            with open(self.out_file, 'a') as f:
+                f.write(f"{self.top_left[0]}, {self.top_left[1]}\n"
+                        f"{self.top_left[0]}, {event.y}\n"
+                        f"{event.x}, {self.top_left[1]}\n"
+                        f"{event.x}, {event.y}\n\n")
 
-        self.prev_events = [event.x, event.y]  # save coordinates for next run
+            # reset click counter
+            self.clicks = 0
 
     def run_thru_files(self):
         """run through all images in input directory"""
