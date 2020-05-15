@@ -22,17 +22,17 @@ class ImageCoordinates:
     def get_coordinates(self, file):
         """print to file user selected coordinates"""
         # set up tkinter canvas
-        w = Canvas(self.root, width=1000, height=1000)
-        w.pack()
+        self.w = Canvas(self.root, width=1000, height=1000)
+        self.w.pack()
         self.clicks = 0
-    
+
         # add image to canvas
         image_file = self.in_dir / file
         open_image = Image.open(image_file)
         open_image = open_image.resize((1000, 1000))  # resize image
         img = ImageTk.PhotoImage(open_image)
-        w.create_image(0, 0, image=img, anchor="nw")
-    
+        self.w.create_image(0, 0, image=img, anchor="nw")
+
         # output file for image
         self.out_file = self.out_dir / re.sub(r'[.].*', '.txt', str(file))
         with open(self.out_file, 'w') as f:  # clear contents of out_file
@@ -48,14 +48,14 @@ class ImageCoordinates:
                 print(f"Last set of coordinates incomplete of file: {file}.\nFix coordinate file manually.\n")
 
             # move onto next image
-            w.quit()
-            w.destroy()
-    
+            self.w.quit()
+            self.w.destroy()
+
         # buttons
-        w.bind("<Button 1>", self.print_coordinates)
+        self.w.bind("<Button 1>", self.print_coordinates)
         button = Button(self.root, text='Click to quit', command=close_window)
-        w.create_window(35, 35, anchor='nw', window=button)
-    
+        self.w.create_window(35, 35, anchor='nw', window=button)
+
         self.root.mainloop()
 
     def print_coordinates(self, event):
@@ -67,13 +67,18 @@ class ImageCoordinates:
             f.write(f"{event.x}, {event.y}\n")
             if self.clicks == 4:
                 f.write('\n')
-                self.clicks = 0
 
-        self.prev_events = [event.x, event.y]
+        # draw bounding box
+        if self.clicks == 1:
+            self.first_coord = [event.x, event.y]  # beginning corner of box
+        else:
+            self.w.create_line(self.prev_events[0], self.prev_events[1], event.x, event.y, fill="red", width=2)  # connect corners
 
-        # draw line on file
-        # line = w.create_line(self.prev_events[0], self.prev_events[1], event.x, event.y, fill="red")  # TODO add this
+        if self.clicks == 4:
+            self.w.create_line(event.x, event.y, self.first_coord[0], self.first_coord[1], fill="red", width=2)  # connect first and last corners
+            self.clicks = 0  # reset click counter
 
+        self.prev_events = [event.x, event.y]  # save coordinates for next run
 
     def run_thru_files(self):
         """run through all images in input directory"""
