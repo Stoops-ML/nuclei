@@ -24,6 +24,7 @@ class ImageCoordinates:
         # set up tkinter canvas
         w = Canvas(self.root, width=1000, height=1000)
         w.pack()
+        self.clicks = 0
     
         # add image to canvas
         image_file = self.in_dir / file
@@ -33,43 +34,46 @@ class ImageCoordinates:
         w.create_image(0, 0, image=img, anchor="nw")
     
         # output file for image
-        out_file = self.out_dir / re.sub(r'[.].*', '.txt', str(file))
-        with open(out_file, 'w') as f:  # clear contents of out_file
+        self.out_file = self.out_dir / re.sub(r'[.].*', '.txt', str(file))
+        with open(self.out_file, 'w') as f:  # clear contents of out_file
             f.write('\n')  # required for printing next new lines later
 
-        def print_coordinates(event):
-            # print coordinates to file
-            with open(out_file, 'a') as f:
-                f.write(f"{event.x}, {event.y}\n")
-    
-            # count number of lines in file
-            with open(out_file) as f:
-                file_length = len([1 for _ in f])
-    
-            # if four coordinates found (i.e. a bounding box) print new line
-            if file_length % 5 == 0:  # four coordinates and \n (5)
-                with open(out_file, 'a') as f:
-                    f.write('\n')
-    
         def close_window():
             # count number of lines in file
-            with open(out_file) as f:
+            with open(self.out_file) as f:
                 file_length = len([1 for _ in f])
-    
+
             # if four coordinates found (i.e. a bounding box) print new line
-            if file_length % 5 != 0:  # four coordinates and one \n line
+            if self.clicks % 5 != 0:  # four coordinates and one \n line
                 print(f"Last set of coordinates incomplete of file: {file}.\nFix coordinate file manually.\n")
-    
+
             # move onto next image
             w.quit()
             w.destroy()
     
         # buttons
-        w.bind("<Button 1>", print_coordinates)
+        w.bind("<Button 1>", self.print_coordinates)
         button = Button(self.root, text='Click to quit', command=close_window)
         w.create_window(35, 35, anchor='nw', window=button)
     
         self.root.mainloop()
+
+    def print_coordinates(self, event):
+        # increase number of clicks
+        self.clicks += 1
+
+        # print coordinates to file
+        with open(self.out_file, 'a') as f:
+            f.write(f"{event.x}, {event.y}\n")
+            if self.clicks == 4:
+                f.write('\n')
+                self.clicks = 0
+
+        self.prev_events = [event.x, event.y]
+
+        # draw line on file
+        # line = w.create_line(self.prev_events[0], self.prev_events[1], event.x, event.y, fill="red")  # TODO add this
+
 
     def run_thru_files(self):
         """run through all images in input directory"""
