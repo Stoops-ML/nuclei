@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox
 from PIL import Image, ImageTk
 from pathlib import Path
 import os
@@ -9,6 +10,10 @@ class ImageCoordinates:
         # initialise
         self.root = Tk()
         self.line = None
+        self.corner = None
+        self.dot = None
+        self.w = None
+        self.out_file = None
 
         # folders
         self.in_dir = Path(__file__).parent / input_folder
@@ -25,7 +30,6 @@ class ImageCoordinates:
         # set up tkinter canvas
         self.w = Canvas(self.root, width=1000, height=1000)
         self.w.pack()
-        self.corner = None
 
         # add image to canvas
         image_file = self.in_dir / file
@@ -40,15 +44,14 @@ class ImageCoordinates:
             pass
 
         def close_window():
-            # count number of lines in file
-            with open(self.out_file) as f:
-                file_length = len([1 for _ in f])
+            if self.corner:  # if bounding box started but not finished
+                messagebox.showerror("Can't move to next image!", "Please finish the current bounding box in order to"
+                                                                  "move onto the next image.")
+            else:  # move onto next image or close window
+                self.w.quit()
+                self.w.destroy()
 
-            # move onto next image
-            self.w.quit()
-            self.w.destroy()
-
-        # buttons
+        # buttons and binds
         self.w.bind("<Button 1>", self.print_coordinates)
         self.w.bind("<Motion>", self.draw_line)
         button = Button(self.root, text='Next image', command=close_window)
@@ -57,17 +60,20 @@ class ImageCoordinates:
         self.root.mainloop()
 
     def print_coordinates(self, event):
-        if self.corner is None:
+        if not self.corner:
             self.corner = [event.x, event.y]  # save first corner
 
-            # draw reference dot
             x1, y1 = (event.x - 1), (event.y - 1)
             x2, y2 = (event.x + 1), (event.y + 1)
-            self.dot = self.w.create_oval(x1, y1, x2, y2, fill='black', outline='green', width=10)
+            self.dot = self.w.create_oval(x1, y1, x2, y2, fill='black', outline='green', width=10)  # draw reference dot
+
+        elif self.corner == [event.x, event.y]:  # don't register box with no area
+            self.w.delete(self.dot)  # delete reference dot
+            self.corner = None  # reset corner
 
         else:
-            # draw bounding box
-            self.w.create_rectangle(self.corner[0], self.corner[1], event.x, event.y, width=2, outline='red')
+            self.w.create_rectangle(self.corner[0], self.corner[1], event.x, event.y,
+                                    width=2, outline='red')  # draw bounding box
             self.w.delete(self.dot)  # delete reference dot
 
             # print coordinates to file
@@ -76,21 +82,23 @@ class ImageCoordinates:
                         f"{self.corner[0]}, {event.y}\n"
                         f"{event.x}, {self.corner[1]}\n"
                         f"{event.x}, {event.y}\n\n")
-                
-            self.corner = None
+
+            self.corner = None  # reset corner
 
     def draw_line(self, event):
-        if self.line is not None:
+        if self.line:  # delete line when mouse moves
             self.w.delete(self.line)
-        self.line = self.w.create_line(self.corner[0], self.corner[1], event.x, event.y, dash=2, width=2, fill='red')
+        if self.corner:  # draw line if self.corner exists
+            self.line = self.w.create_line(self.corner[0], self.corner[1], event.x, event.y,
+                                           dash=2, width=2, fill='red')
 
-    def run_thru_files(self):
+    def run_through_images(self):
         """run through all images in input directory"""
-        for fimage in self.files:
-            self.root.title(f"Image file: {fimage}")
-            self.get_coordinates(fimage)
+        for image_file in self.files:
+            self.root.title(f"Image file: {image_file}")
+            self.get_coordinates(image_file)
 
 
 if __name__ == '__main__':
     write_coordinates = ImageCoordinates()
-    write_coordinates.run_thru_files()
+    write_coordinates.run_through_images()

@@ -9,3 +9,7 @@ Below is in a sample image of nuclei cells in bounding boxes.
 
 ## Files
 - make_bounds.py opens the images in the 'images' folder (one at a time) and allows the user to register the coordinates (a bounding box) around all the nuclei using the mouse
+
+## To do
+- make a script to show images with their bounding boxes
+- begin writing the densenet
